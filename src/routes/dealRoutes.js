@@ -1,0 +1,12 @@
+const router = require("express").Router();
+const c = require("../controllers/dealController");
+const { protect } = require("../middleware/authMiddleware");
+const validate = require("../middleware/validate");
+const { dealSchema } = require("../validators/dealValidator");
+router.use(protect);
+router.post("/", validate(dealSchema), c.createDeal);
+router.get("/", c.getDeals);
+router.get("/:id", c.getDeal);
+router.patch("/:id", c.updateDeal);
+router.delete("/:id", c.deleteDeal);
+module.exports = router;

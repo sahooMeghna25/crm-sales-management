@@ -1,0 +1,10 @@
+const router = require("express").Router();
+const c = require("../controllers/customerController");
+const { protect } = require("../middleware/authMiddleware");
+router.use(protect);
+router.post("/", c.createCustomer);
+router.get("/", c.getCustomers);
+router.get("/:id", c.getCustomer);
+router.patch("/:id", c.updateCustomer);
+router.delete("/:id", c.deleteCustomer);
+module.exports = router;

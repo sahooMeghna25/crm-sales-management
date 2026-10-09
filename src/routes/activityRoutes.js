@@ -1,0 +1,11 @@
+const router = require("express").Router();
+const c = require("../controllers/activityController");
+const { protect } = require("../middleware/authMiddleware");
+router.use(protect);
+router.post("/", c.createActivity);
+router.get("/", c.getActivities);
+router.get("/:id", c.getActivity);
+router.patch("/:id", c.updateActivity);
+router.patch("/:id/complete", c.completeActivity);
+router.delete("/:id", c.deleteActivity);
+module.exports = router;
