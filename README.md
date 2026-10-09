@@ -1,3 +1,5 @@
+<<<<<<< HEAD
+
 # CRM Sales Management Backend
 
 A REST API for managing leads, customers, sales deals, activities and audit timelines.

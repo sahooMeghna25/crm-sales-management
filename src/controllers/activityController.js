@@ -1,9 +1,141 @@
-const Activity=require('../models/Activity');const {getPagination,paginationMeta}=require('../utils/pagination');const {success}=require('../utils/apiResponse');const {addTimeline}=require('../services/timelineService');
-async function refreshOverdue(){await Activity.updateMany({status:'Pending',dueDate:{$lt:new Date()}},{$set:{status:'Overdue'}})}
-async function createActivity(req,res,next){try{const a=await Activity.create({...req.body,createdBy:req.user._id});await addTimeline({action:'Activity created',entityType:req.body.lead?'Lead':req.body.customer?'Customer':'Deal',entityId:req.body.lead||req.body.customer||req.body.deal,performedBy:req.user._id});success(res,'Activity created successfully',a,201)}catch(e){next(e)}}
-async function getActivities(req,res,next){try{await refreshOverdue();const{page,limit,skip}=getPagination(req.query);const f=req.user.role==='Sales Executive'?{assignedTo:req.user._id}:{};if(req.query.status)f.status=req.query.status;if(req.query.type)f.type=req.query.type;const[a,total]=await Promise.all([Activity.find(f).populate('assignedTo','name email').populate('createdBy','name').sort(req.query.sort||'dueDate').skip(skip).limit(limit),Activity.countDocuments(f)]);success(res,'Activities fetched successfully',a,200,paginationMeta(page,limit,total))}catch(e){next(e)}}
-async function getActivity(req,res,next){try{await refreshOverdue();const a=await Activity.findById(req.params.id).populate('assignedTo','name email').populate('createdBy','name');if(!a)return res.status(404).json({success:false,message:'Activity not found'});if(req.user.role==='Sales Executive'&&String(a.assignedTo._id)!==String(req.user._id))return res.status(403).json({success:false,message:'Access denied'});success(res,'Activity fetched successfully',a)}catch(e){next(e)}}
-async function updateActivity(req,res,next){try{const a=await Activity.findById(req.params.id);if(!a)return res.status(404).json({success:false,message:'Activity not found'});if(req.user.role==='Sales Executive'&&String(a.assignedTo)!==String(req.user._id))return res.status(403).json({success:false,message:'Access denied'});Object.assign(a,req.body);await a.save();success(res,'Activity updated successfully',a)}catch(e){next(e)}}
-async function completeActivity(req,res,next){try{const a=await Activity.findById(req.params.id);if(!a)return res.status(404).json({success:false,message:'Activity not found'});if(req.user.role==='Sales Executive'&&String(a.assignedTo)!==String(req.user._id))return res.status(403).json({success:false,message:'Access denied'});a.status='Completed';a.completedAt=new Date();await a.save();success(res,'Activity completed successfully',a)}catch(e){next(e)}}
-async function deleteActivity(req,res,next){try{const a=await Activity.findById(req.params.id);if(!a)return res.status(404).json({success:false,message:'Activity not found'});if(req.user.role==='Sales Executive'&&String(a.createdBy)!==String(req.user._id))return res.status(403).json({success:false,message:'Access denied'});await a.deleteOne();success(res,'Activity deleted successfully')}catch(e){next(e)}}
-module.exports={createActivity,getActivities,getActivity,updateActivity,completeActivity,deleteActivity};
+const Activity = require("../models/Activity");
+const { getPagination, paginationMeta } = require("../utils/pagination");
+const { success } = require("../utils/apiResponse");
+const { addTimeline } = require("../services/timelineService");
+async function refreshOverdue() {
+  await Activity.updateMany(
+    { status: "Pending", dueDate: { $lt: new Date() } },
+    { $set: { status: "Overdue" } },
+  );
+}
+async function createActivity(req, res, next) {
+  try {
+    const a = await Activity.create({ ...req.body, createdBy: req.user._id });
+    await addTimeline({
+      action: "Activity created",
+      entityType: req.body.lead
+        ? "Lead"
+        : req.body.customer
+          ? "Customer"
+          : "Deal",
+      entityId: req.body.lead || req.body.customer || req.body.deal,
+      performedBy: req.user._id,
+    });
+    success(res, "Activity created successfully", a, 201);
+  } catch (e) {
+    next(e);
+  }
+}
+async function getActivities(req, res, next) {
+  try {
+    await refreshOverdue();
+    const { page, limit, skip } = getPagination(req.query);
+    const f =
+      req.user.role === "Sales Executive" ? { assignedTo: req.user._id } : {};
+    if (req.query.status) f.status = req.query.status;
+    if (req.query.type) f.type = req.query.type;
+    const [a, total] = await Promise.all([
+      Activity.find(f)
+        .populate("assignedTo", "name email")
+        .populate("createdBy", "name")
+        .sort(req.query.sort || "dueDate")
+        .skip(skip)
+        .limit(limit),
+      Activity.countDocuments(f),
+    ]);
+    success(
+      res,
+      "Activities fetched successfully",
+      a,
+      200,
+      paginationMeta(page, limit, total),
+    );
+  } catch (e) {
+    next(e);
+  }
+}
+async function getActivity(req, res, next) {
+  try {
+    await refreshOverdue();
+    const a = await Activity.findById(req.params.id)
+      .populate("assignedTo", "name email")
+      .populate("createdBy", "name");
+    if (!a)
+      return res
+        .status(404)
+        .json({ success: false, message: "Activity not found" });
+    if (
+      req.user.role === "Sales Executive" &&
+      String(a.assignedTo._id) !== String(req.user._id)
+    )
+      return res.status(403).json({ success: false, message: "Access denied" });
+    success(res, "Activity fetched successfully", a);
+  } catch (e) {
+    next(e);
+  }
+}
+async function updateActivity(req, res, next) {
+  try {
+    const a = await Activity.findById(req.params.id);
+    if (!a)
+      return res
+        .status(404)
+        .json({ success: false, message: "Activity not found" });
+    if (
+      req.user.role === "Sales Executive" &&
+      String(a.assignedTo) !== String(req.user._id)
+    )
+      return res.status(403).json({ success: false, message: "Access denied" });
+    Object.assign(a, req.body);
+    await a.save();
+    success(res, "Activity updated successfully", a);
+  } catch (e) {
+    next(e);
+  }
+}
+async function completeActivity(req, res, next) {
+  try {
+    const a = await Activity.findById(req.params.id);
+    if (!a)
+      return res
+        .status(404)
+        .json({ success: false, message: "Activity not found" });
+    if (
+      req.user.role === "Sales Executive" &&
+      String(a.assignedTo) !== String(req.user._id)
+    )
+      return res.status(403).json({ success: false, message: "Access denied" });
+    a.status = "Completed";
+    a.completedAt = new Date();
+    await a.save();
+    success(res, "Activity completed successfully", a);
+  } catch (e) {
+    next(e);
+  }
+}
+async function deleteActivity(req, res, next) {
+  try {
+    const a = await Activity.findById(req.params.id);
+    if (!a)
+      return res
+        .status(404)
+        .json({ success: false, message: "Activity not found" });
+    if (
+      req.user.role === "Sales Executive" &&
+      String(a.createdBy) !== String(req.user._id)
+    )
+      return res.status(403).json({ success: false, message: "Access denied" });
+    await a.deleteOne();
+    success(res, "Activity deleted successfully");
+  } catch (e) {
+    next(e);
+  }
+}
+module.exports = {
+  createActivity,
+  getActivities,
+  getActivity,
+  updateActivity,
+  completeActivity,
+  deleteActivity,
+};
